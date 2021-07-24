@@ -16,8 +16,12 @@ func showHelp(param []string) (retry bool) {
 	Help Commands 
 	-----------------------------------
   	%s-h, help%s 
+
+	Clear Commands 
+	-----------------------------------
+  	%s-c, clear%s
 `
 
-	fmt.Printf(str, colorRed, colorReset, colorCyan, colorReset, colorCyan, colorReset)
+	fmt.Printf(str, colorRed, colorReset, colorCyan, colorReset, colorCyan, colorReset, colorCyan, colorReset)
 	return true
 }
