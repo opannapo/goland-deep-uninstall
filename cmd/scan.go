@@ -24,9 +24,15 @@ var patternGoland2021_1 = map[string]string{
 	"./.local/share/JetBrains/Goland":       "./.local/share/JetBrains/Goland",
 }
 
+var patternTest = map[string]string{
+	"./DeppUninstallTestGoland":  "./DeppUninstallTestGoland",
+	"./.DeppUninstallTestGoland": "./.DeppUninstallTestGoland",
+}
+
 const (
 	version2020_2 = "2020.2"
 	version2021_1 = "2021.1"
+	versionTest   = "test"
 )
 
 func findAllDirectoryFiles(param []string) (retry bool) {
@@ -35,6 +41,8 @@ func findAllDirectoryFiles(param []string) (retry bool) {
 		fmt.Printf("%sExample :: scan 2020.2 %s\n", colorYellow, colorReset)
 		return true
 	}
+
+	param[0] = strings.ToLower(param[0])
 
 	strCmd := "find"
 	argsCmd := []string{
@@ -70,6 +78,8 @@ func findAllDirectoryFiles(param []string) (retry bool) {
 	case version2021_1:
 		selectedMapPattern = patternGoland2021_1
 		break
+	case versionTest:
+		selectedMapPattern = patternTest
 	}
 
 	for i, s := range splitStr {
@@ -91,6 +101,7 @@ func findAllDirectoryFiles(param []string) (retry bool) {
 	ok := confirmMessage()
 	if ok {
 		fmt.Println("Deleting...")
+
 	} else {
 		fmt.Println("Exit")
 	}
