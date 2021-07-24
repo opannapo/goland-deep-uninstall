@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"os"
@@ -54,14 +55,14 @@ func findAllDirectoryFiles(param []string) (retry bool) {
 		"-print",
 	}
 
-	dir, err := os.UserHomeDir()
+	homeUserDir, err := os.UserHomeDir()
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%+v %s(%s)%s\n", fmt.Sprintf(mainCommands["scan"].Label, param[0]), colorCyan, dir, colorReset)
+	fmt.Printf("%+v %s(%s)%s\n", fmt.Sprintf(mainCommands["scan"].Label, param[0]), colorCyan, homeUserDir, colorReset)
 
 	cmd := exec.Command(strCmd, argsCmd...)
-	cmd.Dir = dir
+	cmd.Dir = homeUserDir
 	findOut, err := cmd.Output()
 	if err != nil {
 		log.Fatal(err)
@@ -100,11 +101,43 @@ func findAllDirectoryFiles(param []string) (retry bool) {
 
 	ok := confirmMessage()
 	if ok {
-		fmt.Println("Deleting...")
+		//fmt.Println("Deleting...")
+		for _, d := range dirToRemove {
+			rmCommand(d)
+		}
 
 	} else {
 		fmt.Println("Exit")
 	}
 	_, _ = reader.Discard(0)
 	return false
+}
+
+func rmCommand(dir string) {
+	rmCmd := "rm"
+	argsRmCmd := []string{
+		"-r",
+		dir,
+	}
+
+	cmd := exec.Command(rmCmd, argsRmCmd...)
+	fmt.Printf("%sDeleting...%s %s%+v%s \n", colorRed, colorReset, colorCyan, cmd, colorReset)
+
+	var stderr bytes.Buffer
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Stderr = &stderr
+
+	homeUserDir, err := os.UserHomeDir()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	cmd.Dir = homeUserDir
+	err = cmd.Run()
+	if err != nil {
+		log.Fatal(stderr.String())
+	}
+
+	fmt.Printf("%sDeleted » %s %s%+v%s \n", colorGreen, colorReset, colorRed, cmd, colorReset)
 }
