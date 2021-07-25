@@ -14,7 +14,7 @@ Soul Mizqin meronta-ronta, app ini buat pribadi yang anti bajakan namun juga ant
 Berfungsi untuk me-reset konfigurasi GoLand sehingga Expiration Date selalu terbarukan setiap kali direset :(
 
 #
-_Saat ini hanya support untuk Goland Versi 2020.2.*_
+_Saat ini hanya support untuk Goland Versi 2020.2.* Linux_ 
 #
 
 
