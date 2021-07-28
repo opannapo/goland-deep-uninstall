@@ -63,9 +63,11 @@ func findAllDirectoryFiles(param []string) (retry bool) {
 
 	cmd := exec.Command(strCmd, argsCmd...)
 	cmd.Dir = homeUserDir
+	log.Printf("cmd %s %s\n", homeUserDir, cmd.String())
 	findOut, err := cmd.Output()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal(string(findOut))
+		log.Fatalf("error cmd %s\n", err.Error())
 	}
 
 	dirToRemove := map[int]string{}
