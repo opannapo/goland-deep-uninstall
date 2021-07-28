@@ -3,37 +3,12 @@ package cmd
 import (
 	"bytes"
 	"fmt"
+	"goland-deep-uninstall/cmd/dirpattern"
 	"log"
 	"os"
 	"os/exec"
+	"runtime"
 	"strings"
-)
-
-var patternGoland2020_2 = map[string]string{
-	"./.config/JetBrains/GoLand2020.2":      "./.config/JetBrains/GoLand2020.2",
-	"./.cache/JetBrains/GoLand2020.2":       "./.cache/JetBrains/GoLand2020.2",
-	"./.java/.userPrefs/jetbrains/goland":   "./.java/.userPrefs/jetbrains/goland",
-	"./.local/share/JetBrains/GoLand2020.2": "./.local/share/JetBrains/GoLand2020.2",
-	"./.local/share/JetBrains/Goland":       "./.local/share/JetBrains/Goland",
-}
-
-var patternGoland2021_1 = map[string]string{
-	"./.config/JetBrains/GoLand2020.2":      "./.config/JetBrains/GoLand2020.2",
-	"./.cache/JetBrains/GoLand2020.2":       "./.cache/JetBrains/GoLand2020.2",
-	"./.java/.userPrefs/jetbrains/goland":   "./.java/.userPrefs/jetbrains/goland",
-	"./.local/share/JetBrains/GoLand2020.2": "./.local/share/JetBrains/GoLand2020.2",
-	"./.local/share/JetBrains/Goland":       "./.local/share/JetBrains/Goland",
-}
-
-var patternTest = map[string]string{
-	"./DeppUninstallTestGoland":  "./DeppUninstallTestGoland",
-	"./.DeppUninstallTestGoland": "./.DeppUninstallTestGoland",
-}
-
-const (
-	version2020_2 = "2020.2"
-	version2021_1 = "2021.1"
-	versionTest   = "test"
 )
 
 func findAllDirectoryFiles(param []string) (retry bool) {
@@ -48,10 +23,8 @@ func findAllDirectoryFiles(param []string) (retry bool) {
 	strCmd := "find"
 	argsCmd := []string{
 		".",
-		"-type",
-		"d",
 		"-iname",
-		"*goland*",
+		`*goland*`,
 		"-print",
 	}
 
@@ -64,25 +37,22 @@ func findAllDirectoryFiles(param []string) (retry bool) {
 	cmd := exec.Command(strCmd, argsCmd...)
 	cmd.Dir = homeUserDir
 	log.Printf("cmd %s %s\n", homeUserDir, cmd.String())
-	findOut, err := cmd.Output()
+
+	var stderr bytes.Buffer
+	var findOut bytes.Buffer
+	cmd.Stderr = &stderr
+	cmd.Stdout = &findOut
+	err = cmd.Run()
 	if err != nil {
-		log.Fatal(string(findOut))
-		log.Fatalf("error cmd %s\n", err.Error())
+		fmt.Printf("Err %s %s\n", stderr.String(), err)
 	}
 
 	dirToRemove := map[int]string{}
-	splitStr := strings.Split(string(findOut), "\n")
+	splitStr := strings.Split(findOut.String(), "\n")
 
-	selectedMapPattern := map[string]string{}
-	switch param[0] {
-	case version2020_2:
-		selectedMapPattern = patternGoland2020_2
-		break
-	case version2021_1:
-		selectedMapPattern = patternGoland2021_1
-		break
-	case versionTest:
-		selectedMapPattern = patternTest
+	selectedMapPattern, err := getMapPatternByOs(param[0])
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	for i, s := range splitStr {
@@ -98,12 +68,20 @@ func findAllDirectoryFiles(param []string) (retry bool) {
 
 	if len(dirToRemove) < 1 {
 		fmt.Printf("%sVersion %s Not Found!%s\n", colorYellow, param[0], colorReset)
+
+		if param[0] == dirpattern.VersionDemo {
+			fmt.Printf("%s\nMakesure this directory has been created on your computer :%s\n", colorCyan, colorReset)
+			mapDemo := dirpattern.DemoMap()
+			for _, dir := range mapDemo {
+				fmt.Printf("%s » %s %s\n", colorCyan, dir, colorReset)
+			}
+		}
+
 		return true
 	}
 
-	ok := confirmMessage()
+	ok := confirmDeleteMessage(len(dirToRemove))
 	if ok {
-		//fmt.Println("Deleting...")
 		for _, d := range dirToRemove {
 			rmCommand(d)
 		}
@@ -142,4 +120,19 @@ func rmCommand(dir string) {
 	}
 
 	fmt.Printf("%sDeleted » %s %s%+v%s \n", colorGreen, colorReset, colorRed, cmd, colorReset)
+}
+
+func getMapPatternByOs(versionParam string) (map[string]string, error) {
+	if versionParam == dirpattern.VersionDemo {
+		return dirpattern.DemoMap(), nil
+	} else {
+		switch runtime.GOOS {
+		case "darwin":
+			return dirpattern.DarwinDirMap(versionParam), nil
+		case "linux":
+			return dirpattern.LinuxDirMap(versionParam), nil
+		}
+	}
+
+	return nil, fmt.Errorf("pattern not found")
 }
