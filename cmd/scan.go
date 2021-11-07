@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"runtime"
 	"strings"
+	"time"
 )
 
 func findAllDirectoryFiles(param []string) (retry bool) {
@@ -42,11 +43,17 @@ func findAllDirectoryFiles(param []string) (retry bool) {
 	var findOut bytes.Buffer
 	cmd.Stderr = &stderr
 	cmd.Stdout = &findOut
-	err = cmd.Run()
-	if err != nil {
-		fmt.Printf("Err %s %s\n", stderr.String(), err)
-	}
 
+	chCmdRun := make(chan struct{})
+	go func() {
+		err = cmd.Run()
+		if err != nil {
+			fmt.Printf("Err %s %s\n", stderr.String(), err)
+		}
+		close(chCmdRun)
+	}()
+
+	<-chCmdRun
 	dirToRemove := map[int]string{}
 	splitStr := strings.Split(findOut.String(), "\n")
 
@@ -55,17 +62,30 @@ func findAllDirectoryFiles(param []string) (retry bool) {
 		log.Fatal(err)
 	}
 
-	for i, s := range splitStr {
-		if len(s) > 0 {
-			if len(selectedMapPattern[s]) != 0 {
-				fmt.Printf("%s[✔] %s %s\n", colorCyan, s, colorReset)
-				dirToRemove[i] = s
-			} else {
-				fmt.Printf("[x] %s\n", s)
+	chColoring := make(chan struct{})
+	go func() {
+		var lastInsertPattern string
+		for i, s := range splitStr {
+			if len(s) > 0 {
+				time.Sleep(time.Millisecond * 5)
+				indicator := selectedMapPattern[s]
+				if len(indicator) > 0 {
+					fmt.Printf("%s[✔] %s %s\n", colorLightCyan, s, colorReset)
+					dirToRemove[i] = s
+					lastInsertPattern = s
+				} else {
+					if len(lastInsertPattern) > 0 && strings.Contains(s, lastInsertPattern) {
+						fmt.Printf("%s    %s %s\n", colorCyan, s, colorReset)
+					} else {
+						fmt.Printf("[x] %s\n", s)
+					}
+				}
 			}
 		}
-	}
+		close(chColoring)
+	}()
 
+	<-chColoring
 	if len(dirToRemove) < 1 {
 		fmt.Printf("%sVersion %s Not Found!%s\n", colorYellow, param[0], colorReset)
 

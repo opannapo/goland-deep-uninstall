@@ -3,6 +3,7 @@ package dirpattern
 const (
 	Version2020_2 = "2020.2"
 	Version2021_1 = "2021.1"
+	Version2021_2 = "2021.2"
 	VersionDemo   = "demo"
 )
 
@@ -27,6 +28,8 @@ func LinuxDirMap(version string) map[string]string {
 		return linux.V_2020_2()
 	case Version2021_1:
 		return linux.V_2021_1()
+	case Version2021_2:
+		return linux.V_2021_2()
 	}
 
 	return nil
