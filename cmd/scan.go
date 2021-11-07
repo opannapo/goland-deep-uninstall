@@ -77,7 +77,7 @@ func findAllDirectoryFiles(param []string) (retry bool) {
 					if len(lastInsertPattern) > 0 && strings.Contains(s, lastInsertPattern) {
 						fmt.Printf("%s    %s %s\n", colorCyan, s, colorReset)
 					} else {
-						fmt.Printf("[x] %s\n", s)
+						fmt.Printf("%s[x] %s %s\n", colorWhite, s, colorReset)
 					}
 				}
 			}
