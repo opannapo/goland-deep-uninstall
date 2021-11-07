@@ -70,7 +70,7 @@ func findAllDirectoryFiles(param []string) (retry bool) {
 				time.Sleep(time.Millisecond * 5)
 				indicator := selectedMapPattern[s]
 				if len(indicator) > 0 {
-					fmt.Printf("%s[✔] %s %s\n", colorLightCyan, s, colorReset)
+					fmt.Printf("%s[✔] %s %s\n", colorCyan, s, colorReset)
 					dirToRemove[i] = s
 					lastInsertPattern = s
 				} else {
